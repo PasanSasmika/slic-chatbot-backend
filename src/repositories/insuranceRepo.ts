@@ -30,18 +30,24 @@ export const InsuranceRepo = {
   },
 
   async searchKnowledgeBase(query: string) {
+    // Split user query into keywords (e.g., "car crash" -> "car", "crash")
+    const keywords = query.split(" ").filter(w => w.length > 3);
     
+    if (keywords.length === 0) return "Please provide more details.";
+
+    // Dynamic SQL to find ANY matching keyword
+    const conditions = keywords.map(() => `question LIKE ? OR answer LIKE ?`).join(' OR ');
+    const values = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
+
     const [rows] = await db.execute<RowDataPacket[]>(
-      `SELECT question, answer FROM knowledge_base 
-       WHERE question LIKE ? OR answer LIKE ? 
-       LIMIT 3`,
-      [`%${query}%`, `%${query}%`]
+      `SELECT question, answer FROM knowledge_base WHERE ${conditions} LIMIT 5`,
+      values
     );
-    
-    if (rows.length === 0) return "No specific documents found in the database.";
+
+    if (rows.length === 0) return null; // Let AI handle the "I don't know"
     
     return rows.map(r => `Q: ${r.question}\nA: ${r.answer}`).join("\n---\n");
-  },
+},
 
   async getPlansByCategory(category: string) {
     const [rows] = await db.execute<RowDataPacket[]>(
