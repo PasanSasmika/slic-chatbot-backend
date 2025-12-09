@@ -69,6 +69,27 @@ export const ChatService = {
         else if (name === 'check_policy_status') {
            toolResult = await InsuranceRepo.getPolicyByPolicyId(String(safeArgs.policyId));
         }
+        
+        else if (name === 'check_claim_status') {
+       toolResult = await InsuranceRepo.getClaimStatus(String(safeArgs.policyId));
+      }
+
+      else if (name === 'get_web_link') {
+      const linkData = await InsuranceRepo.getWebLink(String(safeArgs.keyword));
+     if (linkData) {
+     toolResult = `Here is the link for ${linkData.description}: ${linkData.url}`;
+    } else {
+     toolResult = "I could not find a specific link for that. Please check our main site: www.slic.lk";
+    }
+  }
+  else if (name === 'verify_customer_identity') {
+   const portfolio = await InsuranceRepo.getCustomerPortfolio(String(safeArgs.nic));
+   if (portfolio) {
+     toolResult = portfolio;
+   } else {
+     toolResult = "I could not find a customer with that NIC. Please ask them to double-check their ID.";
+   }
+}
 
         const finalResult = await chat.sendMessage([
           {

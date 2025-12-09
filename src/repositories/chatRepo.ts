@@ -18,5 +18,31 @@ export const ChatRepo = {
       role: r.role,
       parts: [{ text: r.message }]
     }));
+  },
+
+  async getUserSessions() {
+    // We group by session_id to find unique chats
+    // We grab the first user message to use as the "Title"
+    const [rows] = await db.execute<RowDataPacket[]>(
+      `SELECT session_id, 
+              MIN(message) as title, 
+              MAX(created_at) as last_active 
+       FROM chat_logs 
+       WHERE role = 'user' 
+       GROUP BY session_id 
+       ORDER BY last_active DESC`
+    );
+    return rows;
+  },
+
+  async getSessionMessages(sessionId: string) {
+    const [rows] = await db.execute<RowDataPacket[]>(
+      `SELECT role, message as content, created_at as timestamp 
+       FROM chat_logs 
+       WHERE session_id = ? 
+       ORDER BY created_at ASC`,
+      [sessionId]
+    );
+    return rows;
   }
 };

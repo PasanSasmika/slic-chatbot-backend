@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import chatRoutes from './routes/chatRoutes';
+import adminrouter from './routes/adminRoutes';
 
 const app: Application = express();
 
@@ -19,5 +20,5 @@ app.get('/', (req: Request, res: Response) => {
 
 // 3. Mount API Routes
 app.use('/api/chat', chatRoutes);
-
+app.use('/api/admin', adminrouter); 
 export default app;

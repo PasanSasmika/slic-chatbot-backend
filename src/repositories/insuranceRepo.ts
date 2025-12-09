@@ -30,12 +30,10 @@ export const InsuranceRepo = {
   },
 
   async searchKnowledgeBase(query: string) {
-    // Split user query into keywords (e.g., "car crash" -> "car", "crash")
     const keywords = query.split(" ").filter(w => w.length > 3);
     
     if (keywords.length === 0) return "Please provide more details.";
 
-    // Dynamic SQL to find ANY matching keyword
     const conditions = keywords.map(() => `question LIKE ? OR answer LIKE ?`).join(' OR ');
     const values = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
 
@@ -44,7 +42,7 @@ export const InsuranceRepo = {
       values
     );
 
-    if (rows.length === 0) return null; // Let AI handle the "I don't know"
+    if (rows.length === 0) return null;
     
     return rows.map(r => `Q: ${r.question}\nA: ${r.answer}`).join("\n---\n");
 },
@@ -57,5 +55,64 @@ export const InsuranceRepo = {
       [category]
     );
     return JSON.stringify(rows); 
+  },
+
+
+  async getClaimStatus(policyId: string) {
+    const [rows] = await db.execute<RowDataPacket[]>(
+      `SELECT claim_type, status, remarks, DATE_FORMAT(submitted_date, '%Y-%m-%d') as date 
+       FROM claims 
+       WHERE policy_id = ? 
+       ORDER BY submitted_date DESC LIMIT 1`,
+      [policyId]
+    );
+    
+    if (rows.length === 0) return "No claim records found for this policy ID.";
+    
+    const r = rows[0];
+    return `Claim Type: ${r.claim_type}\nStatus: ${r.status.toUpperCase()}\nSubmitted: ${r.date}\nRemarks: ${r.remarks}`;
+  },
+
+  // NEW: Get Web Links
+  async getWebLink(linkType: string) {
+    // Searches for 'brochure', 'pay', 'portal' etc.
+    const [rows] = await db.execute<RowDataPacket[]>(
+      `SELECT description, url FROM web_links 
+       WHERE link_type LIKE ? OR description LIKE ? 
+       LIMIT 1`,
+      [`%${linkType}%`, `%${linkType}%`]
+    );
+
+    if (rows.length === 0) return null;
+    return rows[0];
+  },
+
+
+  async getCustomerPortfolio(nic: string) {
+    // 1. Find Customer
+    const [custRows] = await db.execute<RowDataPacket[]>(
+      `SELECT customer_id, full_name, mobile FROM customers WHERE nic = ?`,
+      [nic]
+    );
+
+    if (custRows.length === 0) return null;
+    const customer = custRows[0];
+
+    // 2. Find Their Active Policies
+    const [policyRows] = await db.execute<RowDataPacket[]>(
+      `SELECT p.policy_id, pl.plan_name, p.status, p.end_date 
+       FROM customer_policies p
+       JOIN insurance_plans pl ON p.plan_id = pl.plan_id
+       WHERE p.customer_id = ?`,
+      [customer.customer_id]
+    );
+
+    // 3. Format the Portfolio for AI
+    const policies = policyRows.length > 0 
+      ? policyRows.map(p => `- ${p.plan_name} (${p.policy_id}): ${p.status.toUpperCase()}, Expires: ${p.end_date}`).join('\n')
+      : "No active policies.";
+
+    return `Customer Identified: ${customer.full_name}\nMobile: ${customer.mobile}\n\nPortfolio:\n${policies}`;
   }
+
 };

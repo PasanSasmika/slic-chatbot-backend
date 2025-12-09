@@ -1,6 +1,6 @@
 import { FunctionDeclaration, SchemaType } from '@google/generative-ai';
 
-// Tool 1: Calculate Motor Premium
+
 export const calculateMotorTool: FunctionDeclaration = {
   name: "calculate_motor_premium",
   description: "Calculates the insurance premium for a vehicle based on its value and type.",
@@ -20,7 +20,7 @@ export const calculateMotorTool: FunctionDeclaration = {
   }
 };
 
-// Tool 2: Check Policy Status
+
 export const checkPolicyStatusTool: FunctionDeclaration = {
   name: "check_policy_status",
   description: "Checks the status, renewal date, and active state of an existing insurance policy.",
@@ -48,7 +48,6 @@ export const searchKnowledgeTool: FunctionDeclaration = {
   }
 };
 
-// Tool 4: Compare Plans
 export const comparePlansTool: FunctionDeclaration = {
   name: "compare_plans",
   description: "Fetches details of two or more insurance plans to compare benefits.",
@@ -61,5 +60,50 @@ export const comparePlansTool: FunctionDeclaration = {
   }
 };
 
-// Export all tools
-export const chatTools = [calculateMotorTool, checkPolicyStatusTool, searchKnowledgeTool, comparePlansTool];
+export const checkClaimTool: FunctionDeclaration = {
+  name: "check_claim_status",
+  description: "Checks the current status of an insurance claim using the Policy ID.",
+  parameters: {
+    type: SchemaType.OBJECT,
+    properties: {
+      policyId: { 
+        type: SchemaType.STRING, 
+        description: "The policy number provided by the user (e.g., P-0001)." 
+      }
+    },
+    required: ["policyId"]
+  }
+};
+
+// 2. Tool for Links
+export const getLinkTool: FunctionDeclaration = {
+  name: "get_web_link",
+  description: "Retrieves official URLs for brochures, online payments, portals, or WhatsApp support.",
+  parameters: {
+    type: SchemaType.OBJECT,
+    properties: {
+      keyword: { 
+        type: SchemaType.STRING, 
+        description: "The type of link needed (e.g., 'brochure', 'payment', 'renewal', 'contact')." 
+      }
+    },
+    required: ["keyword"]
+  }
+};
+
+
+export const identifyCustomerTool: FunctionDeclaration = {
+  name: "verify_customer_identity",
+  description: "Verifies a customer's identity using their NIC (National ID Card) to retrieve policy details.",
+  parameters: {
+    type: SchemaType.OBJECT,
+    properties: {
+      nic: { 
+        type: SchemaType.STRING, 
+        description: "The National Identity Card number provided by the user (e.g., 931234567V)." 
+      }
+    },
+    required: ["nic"]
+  }
+};
+export const chatTools = [calculateMotorTool, checkPolicyStatusTool, searchKnowledgeTool, comparePlansTool,checkClaimTool,getLinkTool,identifyCustomerTool];
