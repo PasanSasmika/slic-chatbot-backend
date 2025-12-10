@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ChatService } from '../services/chatService';
 import { ChatRepo } from '../repositories/chatRepo';
+import { db } from '../config/database';
 
 export const ChatController = {
   async sendMessage(req: Request, res: Response) {
@@ -47,6 +48,16 @@ export const ChatController = {
       console.error("Fetch Error:", error);
       return res.status(500).json({ error: "Failed to load messages" });
     }
-  }
+  },
 
+
+  async deleteChat(req: Request, res: Response) {
+  try {
+    const { sessionId } = req.params;
+    await db.execute("DELETE FROM chat_logs WHERE session_id = ?", [sessionId]);
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Delete failed" });
+  }
+}
 };
